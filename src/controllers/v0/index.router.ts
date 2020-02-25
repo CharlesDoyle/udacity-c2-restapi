@@ -9,6 +9,7 @@ const router: Router = Router(); // create a blank Router object
 router.use('/feed', FeedRouter);  // add routes to router object
 router.use('/users', UserRouter);
 
+// GET {{host}}/api/v0/    This is a dead endpoint that I don't use.
 router.get('/', async (req: Request, res: Response) => {    
     res.send(`V0`);
 });

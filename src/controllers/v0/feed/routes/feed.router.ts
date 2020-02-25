@@ -5,7 +5,8 @@ import * as AWS from '../../../../aws';
 
 const router: Router = Router();
 
-// Get all feed items from api/v0/feed/
+// Get a FeedItem object for each FeedItem from api/v0/feed/
+// each url will be a signed-url from AWS s3.
 // find all items, and order by id descending
 router.get('/', async (req: Request, res: Response) => {
     // first get all rows from the db, to trade the url for a signedUrl
@@ -60,6 +61,8 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // update the record with the id parameter in the endpoint
 // The data to update a column is sent in the body of the request
+// requireAuth parameter means we are checking for a jwt authorization
+// with the middleware function.  
 router.patch('/:id', 
     requireAuth, 
     async (req: Request, res: Response) => {
@@ -87,11 +90,11 @@ router.patch('/:id',
         // The returned array is a promise; 
         // obj is a list with a large object in it
         // obj[0].dataValues is the object representing the updated table
-        const [numRows, obj] = await FeedItem.update({
-            caption: cap,
+        const [numRows, obj] = await FeedItem.update(
+            {caption: cap,
             url: url},
-            // returning:true to return the promise
-        { where: {id:id}, returning: true}); 
+            // update the FeedItem record that has this id
+            { where: {id:id}, returning: true}); 
         // next delete the old record and post a new one.
         //const saved_item = await item_patch.save(); // save the item to the db
         //return res.status(200).send(item_patch);
@@ -106,8 +109,12 @@ router.patch('/:id',
 // the endpoint to request a putSignedURL, used to put a file in S3 bucket
 // Choose a filename that will be used to store an image in s3
 // {{host}}/api/v0/feed/signed-url/my-image.jpg
+// This endpoint requires authorization as a jwt in headers.authorization
+// The only ways this request can fail is with bad authorization or if
+// the AWS configurations are wrong.
 // If you request a signedUrl from AWS with something wrong in your config
 // settings on config.ts, the returned url will be https://s3.amazonaws.com
+// instead of the actual url of my s3 bucket.
 router.get('/signed-url/:fileName', 
     requireAuth, 
     async (req: Request, res: Response) => {
@@ -117,7 +124,13 @@ router.get('/signed-url/:fileName',
     res.status(201).send({url: url}); // return the signedUrl
 });
 
-// Post meta data and the filename after a file is uploaded 
+// {{host}}/api/v0/feed/
+// requireAuth is a middleware function; it runs before the async
+// callback function that we define with req and res., and when 
+// requireAuth calls next(), the flow returns here to call async (req, res)
+// Post a FeedItem object to the DB by sending an object with 2 fields
+// url and caption.
+// Return a signedURL so the user can upload an image file directly to s3.
 // NOTE the file name is they key name in the s3 bucket.
 // body : {caption: string, fileName: string};
 router.post('/', 
@@ -125,7 +138,7 @@ router.post('/',
     async (req: Request, res: Response) => {
     const caption = req.body.caption; // pull the caption data from the body
     const fileName = req.body.url;
-
+    console.log('Checking if caption and filename are good');
     // check Caption is valid
     if (!caption) {
         return res.status(400).send({ message: 'Caption is required or malformed' });
@@ -146,5 +159,6 @@ router.post('/',
     saved_item.url = AWS.getGetSignedUrl(saved_item.url);
     res.status(201).send(saved_item);
 });
+
 // export FeedRouter to the app
 export const FeedRouter: Router = router;

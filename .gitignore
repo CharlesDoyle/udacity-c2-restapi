@@ -29,6 +29,7 @@ plugins/android.json
 plugins/ios.json
 $RECYCLE.BIN/
 postgres_dev/
+practice.js
 logfile
 
 .DS_Store
