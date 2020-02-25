@@ -31,13 +31,12 @@ router.get('/', async (req: Request, res: Response) => {
                 //console.log(row);
                 //console.log('A signedUrl:');
                 //console.log(row.url);
-                //console.log('fuck you');
             }
     });
     //console.log('get all records')
     //console.log(items);
     // send the items object back to the client, with url a signedUrl
-    res.send(items); // items[0].dataValues.url is the signedUrl
+    res.status(200).send(items); // items[0].dataValues.url is the signedUrl
 });
 
 //@TODO  (this works)

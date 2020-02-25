@@ -27,7 +27,7 @@ import { V0MODELS } from './controllers/v0/model.index';
   app.use(bodyParser.json()); // allows us to read json objects in the body of requests
 
   //CORS Should be restricted: only allow requests to the DB from localhost:8100 
-  // which is the client that makes requests from Postman?
+  // Each request coming in will have this CORS policy in the header 
   // allow 5 specific fields in a header?
   app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "http://localhost:8100");
