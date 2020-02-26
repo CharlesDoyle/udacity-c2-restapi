@@ -11,20 +11,28 @@ const c = config.dev;  // c is a json object with configurations for the s3 buck
 //AWS.config.credentials = credentials;
 
 // if config.ts/aws_profile is not set to DEPLOYED then use the 
-// bash environment variable value for my aws profile.  This is the profile
-// I will use when working locally on this app, the charlie profile
-// that is an administrator. AWS.SharedIniFileCredentials() looks
-// as default in ~/.aws/credentials of my local machine for my aws credentials.
+// bash environment variable value for my aws profile.
+// I will use the charlie_udagram_dev profile when this app is run locally.
+// This profile has privileges on my S3 bucket
+// AWS.SharedIniFileCredentials() looks in ~/.aws/credentials of
+// my local machine for my aws credentials, and I tell it which profile
+// to use (charlie or charlie_udagram_dev)
 // When this code is deployed on AWS, I will set the env. variable for
-// my profile to DEPLOYED, so this conditional fails.
-// When the code is deployed, I will be using the IAM roles attached
-// to the app to set my profile, so this statement is not needed.
+// aws_profile to DEPLOYED, so this conditional fails.
+// When the code is cloud deployed, the EB environment will have an 
+// EC2 role with my policy_s3_udagram_media_dev role attached, which
+// gives the environment permissions to use my s3_udagram_dev bucket
 if(c.aws_profile !== "DEPLOYED") {
   // when working locally, use my awscli default IAM credentials 
-  var credentials = new AWS.SharedIniFileCredentials({profile: 'default'});
+  //  AWS.SharedIniFileCredentials looks in ~/.aws/credentials and
+  // defaults to the default profile if I don't pass a profile key:value
+  // I can use any of my defined credentials from that file, including:
+  // {profile: 'default'} or {profile: 'charlie-udagram-dev'} or probably 
+  // I don't have to pass an object, because it defaults to the default profile
+  var credentials = new AWS.SharedIniFileCredentials({profile: c.aws_profile});
   AWS.config.credentials = credentials;
   // now I have an AWS object that knows my AWS account, so I can 
-  // programatically access aws resources.
+  // programatically access my s3 bucket and get a signed-url.
 }
 
 

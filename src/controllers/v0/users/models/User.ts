@@ -8,7 +8,7 @@ export class User extends Model<User> {
   public email!: string;
 
   @Column
-  public password_hash!: string; // for nullable fields
+  public password_hash!: string; // ! means field can be null
 
   @Column
   @CreatedAt

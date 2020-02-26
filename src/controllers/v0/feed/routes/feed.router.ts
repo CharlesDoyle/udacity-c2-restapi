@@ -5,9 +5,13 @@ import * as AWS from '../../../../aws';
 
 const router: Router = Router();
 
-// Get a FeedItem object for each FeedItem from api/v0/feed/
-// each url will be a signed-url from AWS s3.
-// find all items, and order by id descending
+// api/v0/feed/
+// Get each FeedItem object of metadata from our DB
+// each url will be a signed-url for an image in my s3 bucket
+// I could then use the signed-url to download an image from the S3
+// The signedURLs are for images in the s3 that probably don't exist
+// We probably haven't PUT the images in the S3 bucket that have this
+// metadata, so the GetSignedURLs won't get you any images in this app.
 router.get('/', async (req: Request, res: Response) => {
     // first get all rows from the db, to trade the url for a signedUrl
     // get an array of 2 items from the db (rowcount, rows)
@@ -25,7 +29,7 @@ router.get('/', async (req: Request, res: Response) => {
                 // row.url is row.dataValues.url
                 // (you don't have to specify .dataValues)
                 // we are asking AWS for a signedURL so client can 
-                // get the image with this url directly from the db
+                // get the image with this url directly from S3 bucket
                 row.url = AWS.getGetSignedUrl(row.url);
                 //console.log('row after');
                 //console.log(row);
@@ -39,7 +43,7 @@ router.get('/', async (req: Request, res: Response) => {
     res.status(200).send(items); // items[0].dataValues.url is the signedUrl
 });
 
-//@TODO  (this works)
+//@TODO
 //Add an endpoint to GET a specific resource by Primary Key
 //GET {{host}}/api/v0/feed/2
 router.get('/:id', async (req: Request, res: Response) => {
@@ -105,23 +109,33 @@ router.patch('/:id',
 );
 
 
-// the endpoint to request a putSignedURL, used to put a file in S3 bucket
+// the endpoint to request a putSignedURL, 
+// used to put a file in S3 bucket
 // Choose a filename that will be used to store an image in s3
 // {{host}}/api/v0/feed/signed-url/my-image.jpg
 // This endpoint requires authorization as a jwt in headers.authorization
 // The only ways this request can fail is with bad authorization or if
 // the AWS configurations are wrong.
 // If you request a signedUrl from AWS with something wrong in your config
-// settings on config.ts, the returned url will be https://s3.amazonaws.com
-// instead of the actual url of my s3 bucket.
+// settings on config.ts, the returned signed-url will have https://s3.amazonaws.com
+// instead of the actual url of my s3 bucket, and it won't have the 6
+// necessary query parameters that s3 needs to access my s3 bucket named  
+// s3-charlie-udagram-dev
+// should be:  /put-signed-url/:fileName
 router.get('/signed-url/:fileName', 
     requireAuth, 
     async (req: Request, res: Response) => {
     let { fileName } = req.params;
     // AWS.getPutSignedUrl is defined on aws.ts
     const url = AWS.getPutSignedUrl(fileName); 
-    res.status(201).send({url: url}); // return the signedUrl
+    res.status(201).send({signedURL: url, message: 'Expires in 5 min'});
 });
+
+//
+//router.get('/get-signed-url/:fileName', requireAuth,
+//     async (req: Request, res: Response) => {
+//     let { fileName } = req.params
+
 
 // {{host}}/api/v0/feed/
 // requireAuth is a middleware function; it runs before the async

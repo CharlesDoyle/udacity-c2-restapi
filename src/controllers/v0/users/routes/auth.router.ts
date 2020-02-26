@@ -15,7 +15,7 @@ const router: Router = Router();
 // a helper function for registering a new user.  We hash a plain password
 // with salt, so it can be sent to the DB for storage. 
 async function generatePassword(plainTextPassword: string): Promise<string> {
-    //@TODO Use Bcrypt to Generated Salted Hashed Passwords
+    //@TODO Use Bcrypt to Generate Salted Hashed Passwords
  
     // a saltround is how many times the salt is randomly jumbled.
     const saltRounds = 10; // 2^10 or 1024 times to jumble the salt
@@ -28,7 +28,8 @@ async function generatePassword(plainTextPassword: string): Promise<string> {
     const hash = await bcrypt.hash(plainTextPassword, salt);
     return hash;
 }
-// a helper function for login of a returning user
+// a helper function for login of a returning user, that compares 
+// the submitted password with the password in the DB
 async function comparePasswords(plainTextPassword: string, hash: string): Promise<boolean> {
     //@TODO Use Bcrypt to Compare your password to your Salted Hashed Password
     // use this compare line to prove the hash and hashed password same
@@ -40,10 +41,11 @@ async function comparePasswords(plainTextPassword: string, hash: string): Promis
 function generateJWT(user: User): string {
     //@TODO Use jwt to create a new JWT Payload
     // return a signed jwt based on the user and secret string.
-    // jwt.sign(User_obj, secret)  This serializes the user with secret.mess
-    // jwt.sign(user, config.jwt.secret) threw an error that 
-    // the payload (first arg) needs to be a plain object.
-    // user is not a plain JSON object, but user.dataValues is
+    // jwt.sign(User_obj, secret)  This serializes the user with the 
+    // secret defined in config and environment variable.
+    // jwt.sign(payload, config.jwt.secret) requires
+    // the payload (first arg) to be a plain object, 
+    // which means a simple JS object, like user.dataValues
     return jwt.sign(user.dataValues, config.jwt.secret);
 }
 
@@ -89,11 +91,14 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
      });
 }
 
-// a protected endpoint because requireAuth middleware func is a parameter
+// {{localhost}}/api/v0/users/auth/verification
+// a protected endpoint for someone to check if they are a verified user
+// This checks if a user has a valid JWT token in the authorization header
 router.get('/verification', 
     requireAuth, 
     async (req: Request, res: Response) => {
-        return res.status(200).send({ auth: true, message: 'Authenticated.' });
+        console.log('verification');
+        return res.status(200).send({ auth: true, message: 'Authenticated' });
 });
 
 // a user login to {{host}}/api/v0/users/auth/login

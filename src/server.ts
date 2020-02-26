@@ -39,9 +39,10 @@ import { V0MODELS } from './controllers/v0/model.index';
   // when /api/v0/...  is encountered, use IndexRouter to route the various endpoints 
   app.use('/api/v0/', IndexRouter)
 
-  // a GET request to {{host}}/     send back a simple string indicating the root is /api/v0/
+  // a GET request to {{host}}/     
+  // send back a simple welcome message to anyone to accesses the root
   app.get( "/", async ( req, res ) => {
-    res.send( "/api/v0/" );
+    res.send( "Welcome to /api/v0/" );
   } );
   
 
