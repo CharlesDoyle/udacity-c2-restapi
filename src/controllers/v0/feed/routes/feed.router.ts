@@ -11,7 +11,7 @@ const router: Router = Router();
 // I could then use the signed-url to download an image from the S3
 // The signedURLs are for images in the s3 that probably don't exist
 // We probably haven't PUT the images in the S3 bucket that have this
-// metadata, so the GetSignedURLs won't get you any images in this app.
+// metadata, so the GetSignedURLs won't get you any images in this app.eb 
 router.get('/', async (req: Request, res: Response) => {
     // first get all rows from the db, to trade the url for a signedUrl
     // get an array of 2 items from the db (rowcount, rows)
@@ -30,6 +30,7 @@ router.get('/', async (req: Request, res: Response) => {
                 // (you don't have to specify .dataValues)
                 // we are asking AWS for a signedURL so client can 
                 // get the image with this url directly from S3 bucket
+                console.log(row.url);
                 row.url = AWS.getGetSignedUrl(row.url);
                 //console.log('row after');
                 //console.log(row);
@@ -45,6 +46,8 @@ router.get('/', async (req: Request, res: Response) => {
 
 //@TODO
 //Add an endpoint to GET a specific resource by Primary Key
+// The url returned in the object will be a getSignedURL that can retrieve
+// this image from S3
 //GET {{host}}/api/v0/feed/2
 router.get('/:id', async (req: Request, res: Response) => {
     let { id } = req.params;  // get the id from the body
@@ -53,7 +56,8 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!id){
         return res.status(404).send({ message: "No id"});
     }
-    const item = await FeedItem.findByPk(id); // 
+    var item = await FeedItem.findByPk(id); // 
+    item.url = AWS.getGetSignedUrl(item.url);
     if(!item){
         return res.status(404).send({message: 'FeedItem not found'});
     }
@@ -141,10 +145,12 @@ router.get('/signed-url/:fileName',
 // requireAuth is a middleware function; it runs before the async
 // callback function that we define with req and res., and when 
 // requireAuth calls next(), the flow returns here to call async (req, res)
-// Post a FeedItem object to the DB by sending an object with 2 fields
+// Post a FeedItem object to the charliedb1 DB by posting the metadata
+// object with 2 fields (url and caption)
 // url and caption.
-// Return a signedURL so the user can upload an image file directly to s3.
-// NOTE the file name is they key name in the s3 bucket.
+// Return a getSignedURL in the response object so the user can download the 
+// corresponding image directly from the s3-charlie-udagram-dev bucket.
+// NOTE the filename is the key name in the s3 bucket.
 // body : {caption: string, fileName: string};
 router.post('/', 
     requireAuth, 
